@@ -23,6 +23,8 @@ members = ["programs/contracts"]
 
 [scripts]
 test = "sleep 5 && yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+initialise = "ts-node tests/initialise.ts"
+executor = "ts-node tests/executor.ts"
 
 [test]
 startup_wait = 5000
