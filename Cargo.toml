@@ -1,31 +1,14 @@
 [workspace]
 members = [
-    "programs-ecs/components/*",
-    "programs-ecs/systems/*",
-    "programs/*"
+    "programs/contracts"
 ]
 resolver = "2"
-
-[workspace.dependencies]
-# MagicBlock Bolt ECS Framework
-bolt-lang = "0.1.12"
-anchor-lang = "0.30.1"
-
-# Solana Program Dependencies
-anchor-spl = "0.30.1"
-pyth-sdk-solana = "0.10.1"
-mpl-token-metadata = "3.0.0"
-
-# Component dependencies (for systems to import)
-trading-account = { path = "programs-ecs/components/trading-account", features = ["cpi"] }
-competition = { path = "programs-ecs/components/competition", features = ["cpi"] }
-position = { path = "programs-ecs/components/position", features = ["cpi"] }
-leaderboard = { path = "programs-ecs/components/leaderboard", features = ["cpi"] }
 
 [profile.release]
 overflow-checks = true
 lto = "fat"
 codegen-units = 1
+
 [profile.release.build-override]
 opt-level = 3
 incremental = false
