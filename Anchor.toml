@@ -6,10 +6,10 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-paper_trading = "11111111111111111111111111111111"
+paper_trading = "2zaegVL5odaCikNPEzCnaicgvu1n9ueHZoQrvEPWX161"
 
 [programs.localnet]
-paper_trading = "11111111111111111111111111111111"
+paper_trading = "2zaegVL5odaCikNPEzCnaicgvu1n9ueHZoQrvEPWX161"
 
 [registry]
 url = "https://api.apr.dev"
