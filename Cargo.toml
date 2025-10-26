@@ -1,7 +1,5 @@
 [workspace]
-members = [
-    "programs/contracts"
-]
+members = []
 resolver = "2"
 
 [profile.release]
