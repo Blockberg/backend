@@ -309,15 +309,20 @@ pub mod paper_trading {
             ErrorCode::InvalidStopLossPrice
         );
 
+        let cost_token_in = (amount_token_out as u128)
+            .checked_mul(entry_price as u128)
+            .unwrap()
+            .checked_div(1_000_000)
+            .unwrap() as u64;
+
         require!(
-            user_account.token_out_balance >= amount_token_out,
+            user_account.token_in_balance >= cost_token_in,
             ErrorCode::InsufficientBalance
         );
 
-        // Deduct the token_out
-        user_account.token_out_balance = user_account
-            .token_out_balance
-            .checked_sub(amount_token_out)
+        user_account.token_in_balance = user_account
+            .token_in_balance
+            .checked_sub(cost_token_in)
             .unwrap();
 
         // Create the short position
@@ -473,7 +478,6 @@ fn close_position_logic(
                 .unwrap();
         }
         PositionType::Short => {
-            // For a short, calculate the PnL
             let entry_value = (position_account.amount_token_out as u128)
                 .checked_mul(position_account.entry_price as u128)
                 .unwrap()
@@ -486,9 +490,7 @@ fn close_position_logic(
                 .checked_div(1_000_000)
                 .unwrap() as u64;
 
-            // PnL = entry_value - current_value (for a short)
             if entry_value > current_value {
-                // Profit
                 let profit = entry_value - current_value;
                 user_account.token_in_balance = user_account
                     .token_in_balance
@@ -497,7 +499,6 @@ fn close_position_logic(
                     .checked_add(profit)
                     .unwrap();
             } else {
-                // Loss
                 let loss = current_value - entry_value;
                 user_account.token_in_balance = user_account
                     .token_in_balance
@@ -506,12 +507,6 @@ fn close_position_logic(
                     .checked_sub(loss)
                     .unwrap();
             };
-
-            // Return the token_out
-            user_account.token_out_balance = user_account
-                .token_out_balance
-                .checked_add(position_account.amount_token_out)
-                .unwrap();
         }
     }
 
