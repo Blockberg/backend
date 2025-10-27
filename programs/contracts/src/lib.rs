@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use bolt_lang::*;
 
-declare_id!("2zaegVL5odaCikNPEzCnaicgvu1n9ueHZoQrvEPWX161");
+declare_id!("b6NjCktqaB4KqTvsNmYTJ9KBfwMJ7Sh4hMJ2Xz26YR3");
 
 /// Account for MagicBlock Bolt - the user account usable in Ephemeral Rollups
 /// A user can have multiple accounts (one per trading pair)
