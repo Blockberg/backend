@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use bolt_lang::*;
 
-declare_id!("b6NjCktqaB4KqTvsNmYTJ9KBfwMJ7Sh4hMJ2Xz26YR3");
+declare_id!("ENpbjfPxXx9fLhLDcqbLsHmo25LRU4fW9RXFfrqbKbmo");
 
 /// Account for MagicBlock Bolt - the user account usable in Ephemeral Rollups
 /// A user can have multiple accounts (one per trading pair)
@@ -12,6 +12,8 @@ pub struct UserAccount {
     pub pair_index: u8,          // Pair identifier (0=SOL/USDT, 1=BTC/USDT, etc.)
     pub token_in_balance: u64,   // Balance of the input token (ex: USDT) - 6 decimals
     pub token_out_balance: u64,  // Balance of the output token (ex: SOL/BTC/ETH) - 9 decimals
+    pub token_in_decimals: u8,   // Decimals for token_in (typically 6 for USDT)
+    pub token_out_decimals: u8,  // Decimals for token_out (9 for SOL, 8 for BTC, etc.)
     pub total_positions: u64,
     pub created_at: i64,
 }
@@ -97,6 +99,8 @@ pub mod paper_trading {
         pair_index: u8,          // 0=SOL/USDT, 1=BTC/USDT, 2=ETH/USDT, etc.
         entry_fee: u64,
         initial_token_in: u64,   // How many token_in to give to the user (ex: 10,000 USDT)
+        token_in_decimals: u8,   // Decimals for token_in (6 for USDT)
+        token_out_decimals: u8,  // Decimals for token_out (9 for SOL, 8 for BTC, etc.)
     ) -> Result<()> {
         require!(entry_fee >= 100_000_000, ErrorCode::EntryFeeTooLow); // Min 0.1 SOL
 
@@ -107,6 +111,8 @@ pub mod paper_trading {
         user_account.pair_index = pair_index;
         user_account.token_in_balance = initial_token_in;
         user_account.token_out_balance = 0;
+        user_account.token_in_decimals = token_in_decimals;
+        user_account.token_out_decimals = token_out_decimals;
         user_account.total_positions = 0;
         user_account.created_at = clock.unix_timestamp;
 
@@ -140,11 +146,18 @@ pub mod paper_trading {
     ) -> Result<()> {
         let user_account = &mut ctx.accounts.user_account;
         
-        // Calculate the cost in token_in
+        // Calculate the cost in token_in with proper decimal handling
+        let price_decimals = 6u32; // Price always has 6 decimals
+        let decimal_adjustment = (user_account.token_out_decimals as u32)
+            .checked_add(price_decimals)
+            .unwrap()
+            .checked_sub(user_account.token_in_decimals as u32)
+            .unwrap();
+        
         let cost_token_in = (amount_token_out as u128)
             .checked_mul(price as u128)
             .unwrap()
-            .checked_div(1_000_000)
+            .checked_div(10u128.pow(decimal_adjustment))
             .unwrap() as u64;
 
         require!(
@@ -188,11 +201,18 @@ pub mod paper_trading {
             ErrorCode::InsufficientBalance
         );
         
-        // Calculate how many token_in we receive
+        // Calculate how many token_in we receive with proper decimal handling
+        let price_decimals = 6u32; // Price always has 6 decimals
+        let decimal_adjustment = (user_account.token_out_decimals as u32)
+            .checked_add(price_decimals)
+            .unwrap()
+            .checked_sub(user_account.token_in_decimals as u32)
+            .unwrap();
+        
         let received_token_in = (amount_token_out as u128)
             .checked_mul(price as u128)
             .unwrap()
-            .checked_div(1_000_000)
+            .checked_div(10u128.pow(decimal_adjustment))
             .unwrap() as u64;
 
         // Update the balances
@@ -239,11 +259,18 @@ pub mod paper_trading {
             ErrorCode::InvalidStopLossPrice
         );
 
-        // Calculate the cost
+        // Calculate the cost with proper decimal handling
+        let price_decimals = 6u32; // Price always has 6 decimals
+        let decimal_adjustment = (user_account.token_out_decimals as u32)
+            .checked_add(price_decimals)
+            .unwrap()
+            .checked_sub(user_account.token_in_decimals as u32)
+            .unwrap();
+        
         let cost_token_in = (amount_token_out as u128)
             .checked_mul(entry_price as u128)
             .unwrap()
-            .checked_div(1_000_000)
+            .checked_div(10u128.pow(decimal_adjustment))
             .unwrap() as u64;
 
         require!(
@@ -309,10 +336,17 @@ pub mod paper_trading {
             ErrorCode::InvalidStopLossPrice
         );
 
+        let price_decimals = 6u32; // Price always has 6 decimals
+        let decimal_adjustment = (user_account.token_out_decimals as u32)
+            .checked_add(price_decimals)
+            .unwrap()
+            .checked_sub(user_account.token_in_decimals as u32)
+            .unwrap();
+        
         let cost_token_in = (amount_token_out as u128)
             .checked_mul(entry_price as u128)
             .unwrap()
-            .checked_div(1_000_000)
+            .checked_div(10u128.pow(decimal_adjustment))
             .unwrap() as u64;
 
         require!(
@@ -462,13 +496,20 @@ fn close_position_logic(
 ) -> Result<()> {
     let clock = Clock::get()?;
 
+    let price_decimals = 6u32; // Price always has 6 decimals
+    let decimal_adjustment = (user_account.token_out_decimals as u32)
+        .checked_add(price_decimals)
+        .unwrap()
+        .checked_sub(user_account.token_in_decimals as u32)
+        .unwrap();
+
     match position_account.position_type {
         PositionType::Long => {
-            // Calculate the current value
+            // Calculate the current value with proper decimal handling
             let current_value = (position_account.amount_token_out as u128)
                 .checked_mul(current_price as u128)
                 .unwrap()
-                .checked_div(1_000_000)
+                .checked_div(10u128.pow(decimal_adjustment))
                 .unwrap() as u64;
 
             // Return the token_in to the user
@@ -481,13 +522,13 @@ fn close_position_logic(
             let entry_value = (position_account.amount_token_out as u128)
                 .checked_mul(position_account.entry_price as u128)
                 .unwrap()
-                .checked_div(1_000_000)
+                .checked_div(10u128.pow(decimal_adjustment))
                 .unwrap() as u64;
 
             let current_value = (position_account.amount_token_out as u128)
                 .checked_mul(current_price as u128)
                 .unwrap()
-                .checked_div(1_000_000)
+                .checked_div(10u128.pow(decimal_adjustment))
                 .unwrap() as u64;
 
             if entry_value > current_value {
@@ -558,7 +599,7 @@ pub struct UpdateExecutors<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(pair_index: u8, entry_fee: u64, initial_token_in: u64)]
+#[instruction(pair_index: u8, entry_fee: u64, initial_token_in: u64, token_in_decimals: u8, token_out_decimals: u8)]
 pub struct InitializeAccount<'info> {
     #[account(
         init,

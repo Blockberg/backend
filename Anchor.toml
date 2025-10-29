@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-paper_trading = "2zaegVL5odaCikNPEzCnaicgvu1n9ueHZoQrvEPWX161"
+paper_trading = "ENpbjfPxXx9fLhLDcqbLsHmo25LRU4fW9RXFfrqbKbmo"
 
 [programs."https://rpc.magicblock.app/devnet/"]
 close-position = "CXnKyp5DGMWRHsj9JsbECqBbDP1GeUF3c8AYSPZMmNb2"

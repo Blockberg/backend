@@ -11,7 +11,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 
-const PROGRAM_ID = new PublicKey("b6NjCktqaB4KqTvsNmYTJ9KBfwMJ7Sh4hMJ2Xz26YR3");
+const PROGRAM_ID = new PublicKey("ENpbjfPxXx9fLhLDcqbLsHmo25LRU4fW9RXFfrqbKbmo");
 const RPC_URL = "https://rpc.magicblock.app/devnet/";
 
 async function main() {
